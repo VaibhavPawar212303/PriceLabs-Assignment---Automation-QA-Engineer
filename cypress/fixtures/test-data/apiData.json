@@ -1,0 +1,45 @@
+{
+  "dsoUpdate": {
+    "validPayload": {
+      "price": "95",
+      "reason": "Automation Test Update",
+      "basePrice": 70,
+      "priceType": "fixed",
+      "pmsName": "vrm",
+      "minStay": "",
+      "minPrice": "70",
+      "minPriceType": "fixed",
+      "maxPrice": "90",
+      "maxPriceType": "fixed",
+      "listingId": "VRMREALTY___50",
+      "currency": "USD",
+      "parentKey": 2102231,
+      "page": 1,
+      "cacheBuster": 1774025190334,
+      "syncChildren": true,
+      "isParentListing": true,
+      "hasChildren": false,
+      "startDate": "Mar 20 2026",
+      "endDate": "Mar 22 2026",
+      "actualStartDate": "2026-03-20",
+      "actualEndDate": "2026-03-21",
+      "leadTimeExpiry": "24",
+      "currentRowIndex": 7,
+      "snoozeDso": false,
+      "isPricingPage": false,
+      "checkInCheckOutEnabled": false,
+      "checkIn": "0000000",
+      "checkOut": "1111111"
+    },
+    "invalidPayload": {
+      "price": "-999", 
+      "leadTimeExpiry": "0",
+      "listingId": "PMS_ID_123",
+      "actualStartDate": "9999-99-99"
+    },
+    "auth": {
+      "expiredToken": "eyJhbGciOiJIUzI1NiIsInR5...",
+      "garbageToken": "invalid_12345"
+    }
+  }
+}
