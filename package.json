@@ -1,0 +1,20 @@
+{
+  "name": "pricelabs-assignment---automation-qa-engineer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VaibhavPawar212303/PriceLabs-Assignment---Automation-QA-Engineer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/VaibhavPawar212303/PriceLabs-Assignment---Automation-QA-Engineer/issues"
+  },
+  "homepage": "https://github.com/VaibhavPawar212303/PriceLabs-Assignment---Automation-QA-Engineer#readme"
+}
