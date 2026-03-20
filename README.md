@@ -22,9 +22,12 @@ To meet the "Cypress AI" technical standards, the project separates concerns int
 
 ---
 
-## 📊 Data Management
-- **Environment Config:** `cypress/fixtures/config/qa.env.json` stores environment-specific variables like Base URLs and API endpoints.
-- **Test Data:** `cypress/fixtures/test-data/` (Externalized JSON) stores all test inputs (DSO values, credentials) to ensure the tests are strictly data-driven.
+## 📊 Reporting & Failure Analysis (Mochawesome)
+This framework implements `cypress-mochawesome-reporter` to meet the high technical standards for visibility and debugging:
+
+- **Automatic Screenshots:** On any test failure, a screenshot is automatically captured and embedded directly into the HTML report.
+- **Unified HTML Report:** Generates a standalone, interactive HTML report with charts showing pass/fail rates.
+- **Configuration:** Managed via `cypress.config.js` and `cypress/support/e2e.js`.
 
 ---
 
@@ -34,9 +37,3 @@ To meet the "Cypress AI" technical standards, the project separates concerns int
    ```bash
    git clone <repo-url>
    git checkout framework/version.0.1
-
-1. Install dependencies:
-   npm install
-
-Open Cypress:
-   npx cypress open

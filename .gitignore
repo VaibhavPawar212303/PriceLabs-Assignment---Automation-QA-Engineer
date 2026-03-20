@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Cypress local artifacts
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
+# Reports (Mochawesome)
+cypress/reports/
+.run/
+
+# IDE & OS Files
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Sensitive Data / Local Config
+# (Keep the template, but ignore actual credentials if you use a separate file)
+cypress/fixtures/config/secrets.json
+.env
