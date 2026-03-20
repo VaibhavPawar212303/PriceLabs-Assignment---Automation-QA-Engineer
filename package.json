@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "cy:open": "cypress open"
   },
   "repository": {
     "type": "git",
@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/VaibhavPawar212303/PriceLabs-Assignment---Automation-QA-Engineer/issues"
   },
-  "homepage": "https://github.com/VaibhavPawar212303/PriceLabs-Assignment---Automation-QA-Engineer#readme"
+  "homepage": "https://github.com/VaibhavPawar212303/PriceLabs-Assignment---Automation-QA-Engineer#readme",
+  "devDependencies": {
+    "cypress": "^15.12.0",
+    "cypress-mochawesome-reporter": "^4.0.2"
+  }
 }
