@@ -1,4 +1,4 @@
-Cypress.Commands.add('loginViaUI', () => {
+Cypress.Commands.add('login', () => {
     const credentials = Cypress.env('credentials');
     const userIdentifier = credentials?.email || credentials?.username;
 

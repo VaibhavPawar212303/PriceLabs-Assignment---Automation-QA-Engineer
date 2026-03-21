@@ -54,9 +54,6 @@ module.exports = defineConfig({
     // Technical Standards: Stability & Timeouts
     viewportWidth: 1536,
     viewportHeight: 960,
-    defaultCommandTimeout: 15000,
-    requestTimeout: 20000,
-    responseTimeout: 20000,
     video: false,
     screenshotOnRunFailure: true,
     chromeWebSecurity: false,
