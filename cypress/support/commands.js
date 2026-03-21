@@ -17,8 +17,4 @@ Cypress.Commands.add('login', () => {
         cy.get('[name="user[password]"]').should('be.visible').type(credentials.password, { log: false });
         cy.get('input[type="submit"]').click();
     })
-    // --- THIS BLOCK RUNS EVERY TIME ---
-    // After restoring or creating the session, navigate to the target page
-    cy.visit('/multicalendar');
-    cy.url().should('include', '/multicalendar');
 });

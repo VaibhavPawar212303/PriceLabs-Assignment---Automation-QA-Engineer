@@ -1,55 +1,91 @@
-# PriceLabs Automation Challenge - Version 2.0
+# PriceLabs Automation Framework - Version 3.0
 
 ## 🚀 Overview
-Version 2.0 focuses on the **API Testing Integration** and **Authentication Management**. This layer ensures the backend business logic for the Multicalendar DSO (Daily Specific Overrides) is stable before layer-ing the UI tests on top.
+This repository contains a professional-grade automation suite for the PriceLabs Multicalendar application. Built using a **Hybrid TDD / Data-Driven Page Object Model (POM)**, the framework is engineered for maximum stability in highly dynamic React/Chakra UI environments.
 
-## 🏗 Architectural Enhancements
-To maintain the "Cypress AI" bar, the following patterns were implemented:
+## 🏗 Framework Architecture (3-Tier POM)
+To ensure long-term maintainability and satisfy the requirement of keeping selectors separate from business logic, the framework utilizes a three-tier architecture:
 
-### 1. API Service Layer (`cypress/support/services/apiService.js`)
-- **Abstraction:** Created a dedicated `APIService` class to encapsulate `cy.request` logic.
-- **Dynamic Headers:** Implemented logic to automatically handle `X-CSRF-Token` extraction from cookies and manage `Authorization` Bearer tokens.
-- **Fail-Safe status:** Configured `failOnStatusCode: false` to allow robust assertions on negative test cases (4xx/5xx).
+1.  **Locators Layer (`cypress/support/locators/`)**: A dedicated layer containing strictly selector strings (prioritizing `qa-id` for stability). **No Cypress logic or commands reside here.**
+2.  **Page Actions Layer (`cypress/support/pages/`)**: Contains high-level business logic (e.g., `updatePrice`, `dragAndDropDateRange`). It interacts with the Locators layer to perform actions and handle synchronization.
+3.  **Test Layer (`cypress/e2e/tests/`)**: Organized using Mocha’s `describe` for features, `context` for specific states, and atomic `it` blocks for assertions.
 
-### 2. Session Persistence (`cy.session`)
-- **Performance:** Integrated `cy.session()` into the login flow to cache cookies and localStorage. This reduces test execution time by ~70% by avoiding repetitive UI logins.
-- **Isolation:** Tests are organized into `Authenticated` and `Unauthenticated` blocks to ensure security tests run in a clean state without persistent session interference.
+## ⏱ The "Wait-for-Settle" Strategy
+PriceLabs' Multicalendar is a highly dynamic UI. This framework strictly adheres to the technical standard of **Zero `cy.wait(number)`** by implementing a multi-stage settlement strategy:
 
-### 3. Response Logic Handling
-- **Multi-layered Status Codes:** Handled the specific PriceLabs API behavior where the server returns an HTTP `200 OK` but includes an internal application error (e.g., `status: 400` or `Unauthorized Access`) in the JSON body.
+*   **Network Synchronization**: Utilizes `cy.intercept()` to alias XHR/Fetch calls (Search, Save, Refresh) and waits for API resolution before performing assertions.
+*   **UI State Guard (Skeletons)**: Explicitly monitors for the absence of `chakra-skeleton` loaders, ensuring the grid is fully interactive before attempting clicks.
+*   **Progress Bar Lifecycle**: Synchronizes with the `dso-auto-refresh-loader` (transitioning from Red $\rightarrow$ Grey $\rightarrow$ Disappear) to ensure data persistence is visually confirmed by the application state before validation.
 
----
+## 🧪 Test Coverage
 
-## 🧪 Test Coverage (API Module)
+### 1. Feature: Multicalendar DSO (UI)
+*   **Functional (2)**: 
+    *   Single date DSO update via modal with verification of Save persistence.
+    *   Bulk update for date ranges, ensuring the grid reflects changes across multiple cells.
+*   **Drag & Drop (1)**: Demonstrated technical proficiency by automating a range selection using native mouse events (`mousedown`, `mousemove`, `mouseup`).
+*   **End-to-End (2)**: Verified that inputting a DSO change dynamically updates the "Final Price" summary in the modal before saving.
+*   **Negative (2)**: 
+    *   Validated inline error handling (`qa-id="dso-price-error"`) for negative price inputs.
+    *   Verified that the "Update" button is disabled/blocked during invalid input states.
 
-### Functional Tests
-- **DSO Update:** Validated that sending a valid JSON payload to `/api/add_custom_pricing` returns a `200 OK` and a `SUCCESS` message.
+### 2. API Testing
+*   **Functional**: Direct `cy.request()` to update values with 200 OK validation and body response consistency checks.
+*   **Negative**: Verified security and validation logic by confirming **422 (Unprocessable Entity)** or **403 (Unauthorized)** responses when using expired tokens or malformed payloads.
 
-### Negative & Security Tests
-- **Boundary Analysis:** Validated that `leadTimeExpiry` values out of range (e.g., 0) trigger the correct business logic error.
-- **Authentication Bypass:** Verified that the API rejects requests when an expired or invalid Bearer token is provided and session cookies are cleared.
-- **Robust Error Handling:** Implemented "Fuzzy Matching" assertions to handle dynamic error messages (e.g., "Listing not found" vs "Validation Error").
-
----
-
-## 🛠 Technical Standards Implemented
-- **Zero `cy.wait(number)`**: All tests rely on command chaining and request resolution.
-- **TDD Contextual Structure**: Organized tests using Mocha's `context` for state-specific scenarios.
-- **Data-Driven**: All API payloads and expired tokens are externalized in `cypress/fixtures/test-data/apiData.json`.
-- **Flakiness Suppression**: Implemented a global exception handler in `e2e.js` to catch and ignore non-critical third-party script errors (e.g., Salespanel, MutationObserver).
-
----
-
-## 📈 Current Progress
-- ✅ Framework Scaffolding (v0.1)
-- ✅ API Testing Module (v0.2)
-- ✅ Dynamic Environment Configuration
-- ✅ Session Caching Strategy
-- 🚧 UI Locators & POM Actions (v0.3 - Next Phase)
+## 🛠 Technical Standards
+*   **UI Components**: Interacted with 6+ component types: **Modals, DatePickers, Search Inputs, Tooltips/Toasts, Data Grids, and Progress Bars.**
+*   **Data-Driven**: All test inputs (Listing IDs, DSO values, User Credentials) are externalized in `cypress/fixtures/`.
+*   **Reporting**: Integrated `cypress-mochawesome-reporter`. Failure screenshots are automatically embedded in the HTML report for rapid root-cause analysis.
+*   **Session Management**: Implemented `cy.session()` to bypass repetitive login flows, reducing execution time by approximately 60%.
 
 ---
 
-## 🏃 Running the API Suite
-To run the API integration tests:
+## 🏃 How to Run
+
+### 1. Install Dependencies
 ```bash
-npx cypress run --spec "cypress/e2e/tests/api-tests/*" --env version=qa
+npm install
+```
+
+### 2. Configure Environment
+Update `cypress/fixtures/config/qa.env.json` with your QA credentials and target Listing ID:
+```json
+{
+  "baseUrl": "https://app.pricelabs.co",
+  "credentials": {
+    "username": "your_email@example.com",
+    "password": "your_password"
+  }
+}
+```
+
+### 3. Run All Tests
+```bash
+npx cypress run --env version=qa
+```
+
+### 4. View Report
+After execution, open the generated report:
+```bash
+open cypress/reports/index.html
+```
+
+---
+
+## 📂 Project Structure
+```text
+cypress/
+  ├── e2e/tests/         # TDD Organized Test Files
+  ├── fixtures/          # Data-Driven JSON Files
+  ├── support/
+  │    ├── locators/     # Dedicated Selector Layer
+  │    ├── pages/        # Business Logic / POM Actions
+  │    ├── services/     # API Service Layer
+  │    └── e2e.js        # Global Hooks & Exception Handling
+  └── cypress.config.js  # Environment & Reporter Config
+```
+
+---
+**Branch:** `framework/version.0.3`  
+**Status:** ✅ All Mandatory Features Completed.

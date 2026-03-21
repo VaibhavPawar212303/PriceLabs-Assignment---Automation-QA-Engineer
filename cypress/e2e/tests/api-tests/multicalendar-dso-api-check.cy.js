@@ -14,6 +14,8 @@ describe('Feature: Multicalendar DSO API Integration', () => {
         beforeEach(() => {
             // Restore the valid session for these tests
             cy.login();
+            cy.visit('/multicalendar'); // Ensure we are on the grid
+            cy.url().should('include', '/multicalendar');
         });
 
         context('Functional: Valid Update', () => {
