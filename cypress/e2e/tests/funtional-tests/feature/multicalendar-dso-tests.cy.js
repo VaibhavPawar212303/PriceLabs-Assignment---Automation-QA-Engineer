@@ -2,66 +2,70 @@ import { CalendarLocators } from '../../../../support/locators/calendarLocators'
 import CalendarPage from '../../../../support/pages/CalendarPage';
 
 describe('Feature: Multicalendar DSO (Functional)', () => {
-    const listingId = "VRMREALTY___50";
-    const newPrice = "145";
-    const bulkPrice = "225";
-
-
+    let uiData;
+    before(() => {
+        cy.fixture('test-data/uiData').then((data) => {
+            uiData = data;
+        });
+    });
     beforeEach(() => {
         cy.login();
         cy.visit('/multicalendar');
     });
 
-    it('Functional (1): Update DSO values for a single date; verify "Save" persistence', () => {
-        // 1. Search and Select the listing
-        CalendarPage.searchAndVerifyListing(listingId);
+    context('Validate the DSO Update And Save persistence', () => {
+        it('Functional (1): Update DSO with Random Price via Date Header', () => {
+            const randomPrice = (Math.floor(Math.random() * 350) + 151).toString();
+            cy.log(`Test Random Price: ${randomPrice}`);
+            CalendarPage.searchAndVerifyListing(uiData.listingId, uiData.propertyName);
+            CalendarPage.openViewOverridesList(uiData.listingId);
+            CalendarPage.clickEditOverride(uiData.targetDateId, uiData.targetDateText);
+            CalendarPage.updatePrice(randomPrice);
+            CalendarPage.verifyGridPrice(uiData.listingId, 4, randomPrice);
+            cy.reload();
+            CalendarPage.verifyGridPrice(uiData.listingId, 4, randomPrice);
+        });
+        it('Functional (2): Bulk update existing entries sequentially via management list', () => {
+            const listingId = "VRMREALTY___233";
+            const updates = [
+                { dateId: "2026-03-21", cellIndex: 4 },
+                { dateId: "2026-03-22", cellIndex: 5 }
+            ];
+            CalendarPage.searchAndVerifyListing(listingId, uiData.propertyName);
+            CalendarPage.openViewOverridesList(listingId);
+            updates.forEach((item) => {
+                item.randomPrice = (Math.floor(Math.random() * 350) + 151).toString();
+                cy.log(`Step 1: Updating ${item.dateId} to ${item.randomPrice}`);
+                CalendarPage.editEntryFromList(item.dateId);
+                CalendarPage.updatePriceAndSettle(item.randomPrice);
+            });
+            CalendarPage.closeManagementList();
+            updates.forEach((item) => {
+                cy.log(`Step 2: Verifying Grid Index ${item.cellIndex} matches ${item.randomPrice}`);
+                CalendarPage.verifyGridPrice(listingId, item.cellIndex, item.randomPrice);
+            });
+            cy.reload();
+            updates.forEach((item) => {
+                CalendarPage.verifyGridPrice(listingId, item.cellIndex, item.randomPrice);
+            });
 
-        // 2. Open the Modal (Clicking the pricing cell index 4)
-        CalendarPage.openDsoModalForDate(listingId, 4);
-
-        // 3. Perform the Update
-        CalendarPage.updatePrice(newPrice);
-
-        // 4. Verification: persistence check on the grid
-        CalendarPage.verifyGridPrice(listingId, 4, newPrice);
-        
-        // 5. Final check: Toast visibility (Requirement: Negative/Toast messages)
-        cy.get('body').should('contain', 'updated');
-    });
-
-    it('Functional (2): Bulk update for a date range; verify "Save" persistence', () => {
-        // 1. Search listing
-        CalendarPage.searchAndVerifyListing(listingId);
-
-        // 2. Open Modal for the first date (Index 4)
-        CalendarPage.openDsoModalForDate(listingId, 4);
-
-        // 3. Perform Bulk Update
-        // (Assuming the modal is already set to a range or we use the default range)
-        CalendarPage.bulkUpdatePrice(bulkPrice);
-
-        // 4. Requirement: Verify Persistence across the range
-        // We check index 4 (Start Date) and index 5 (End Date)
-        CalendarPage.verifyRangePersistence(listingId, 4, 5, bulkPrice);
+        });
     });
 
     context('Advanced Interaction: Drag & Drop', () => {
         it('Drag & Drop (1): Demonstrate proficiency by automating a range selection', () => {
             const listingId = "VRMREALTY___50";
-
-            // 1. Navigate and search
+            // 1. Setup
             CalendarPage.searchAndVerifyListing(listingId);
-
-            // 2. Drag from Mar 21 (Index 4) to Mar 23 (Index 6)
-            // This selects a 3-day range
-            CalendarPage.dragAndDropDateRange(listingId, 4, 5);
-
-            // 3. Perform a bulk update within the newly opened modal to prove it's active
-            CalendarPage.updatePrice("150");
-
-            // 4. Final verification: Check first and last date in the range
+            // 2. Advanced Interaction: Drag from index 4 to 6
+            CalendarPage.dragAndDropDateRange(listingId, 4, 6);
+            // 3. Fill and Save the new range
+            CalendarPage.addPrice("150");
+            // 4. Multi-Cell Verification (Proves the 'Bulk' aspect)
             CalendarPage.verifyGridPrice(listingId, 4, "150");
             CalendarPage.verifyGridPrice(listingId, 5, "150");
+            CalendarPage.verifyGridPrice(listingId, 6, "150");
+            cy.log('Drag & Drop requirement completed successfully.');
         });
     });
 
@@ -77,13 +81,13 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
     });
 
     context('Negative Scenarios: Error Handling', () => {
-        it.only('Negative (2): Attempt to input invalid characters and verify error handling', () => {
+        it('Negative (1): Attempt to input invalid characters and verify error handling', () => {
             const listingId = "VRMREALTY___50";
             const invalidPrice = "abc";
             const expectedError = "Cannot be less than 0";
 
             CalendarPage.searchAndVerifyListing(listingId);
-            CalendarPage.openDsoModalForDate(listingId, 4);
+            CalendarPage.openDsoModalForDate(uiData.targetDateId);
 
             // Attempt to type alphabetic characters into a numeric field
             CalendarPage.verifyPriceRangeValidationError(invalidPrice, expectedError);
@@ -92,14 +96,14 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             cy.get(CalendarLocators.modalTitle).should('be.visible');
         });
 
-        it.only('Negative (2): Attempt out-of-range percentage and verify toast messages', () => {
+        it('Negative (2): Attempt out-of-range percentage and verify toast messages', () => {
             const listingId = "VRMREALTY___50";
             CalendarPage.searchAndVerifyListing(listingId);
-            CalendarPage.openDsoModalForDate(listingId, 4);
+            CalendarPage.openDsoModalForDate(uiData.targetDateId, 4);
 
             // Attempt a massive number that should trigger a range error
             CalendarPage.attemptInvalidUpdate("9999999");
-            
+
             // The app should show a toast/alert
             cy.get(CalendarLocators.toastAlert).should('be.visible');
         });

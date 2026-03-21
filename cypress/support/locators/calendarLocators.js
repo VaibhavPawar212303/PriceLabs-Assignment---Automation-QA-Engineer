@@ -1,20 +1,22 @@
 export const CalendarLocators = {
-    // 1. Search Component
-    searchListingInput: '[qa-id="search-input"]',
-    
-    // 2. Data Grid Row & Validation (Component: Data Grids)
     listingRow: (listingId) => `tr:has([qa-id*="${listingId}"])`,
     listingCheckbox: (listingId) => `[qa-id="bulk-${listingId}___vrm"]`,
     dsoStatusBand: (listingId) => `[qa-id="dso-band-text-${listingId}"]`,
     saveRefreshBtn: (listingId) => `[qa-id="save-${listingId}___vrm"]`,
-    
-    // 3. Dynamic Pricing Cells (The "Tooltips" Component)
-    // index 4 usually represents the first visible date in the grid
+    listingIdText: (id) => `.pd-copy-listing-id`,
+    syncToggle: (id) => `[qa-id="mc-sync-toggle-${id}"]`,
+    listingEllipses: (id) => `[qa-id="listing-ellipses-${id}"]`,
+    viewOverridesOption: (id) => `[qa-id="dso-view-${id}"]`,
     pricingBadge: (listingId, index) => `[qa-id="price-tooltip--${listingId}-${index}"]`,
-    // Dynamic Date Header Selector (Component: DatePickers/Headers)
-    calendarHeaderDate: (date) => '.css-26nqn0 > .mc-dso-band', 
+    calendarHeaderDate: (date) => `div[qa-id="calendar-header-${date}"]`,
+    basePriceInput: (id) => `[qa-id="base-price-${id}___vrm"]`,
+    editOverrideBtn: (date) => `[qa-id="edit-override-view-${date}"]`,
+    deleteOverrideBtn: (date) => `[qa-id="delete-override-view-${date}"]`,
+    overrideRowByDate: (dateText) => `tr:contains("${dateText}")`,
+    editOverrideBtn: (date) => `[qa-id="edit-override-view-${date}"]`,
 
-    // 4. DSO Modal (Component: Modals)
+    searchListingInput: '[qa-id="search-input"]',
+    propertyName: '.chakra-text.css-1kh6bo9',
     modalTitle: '[qa-id="dso-modal-title"]',
     priceInput: '[qa-id="dso-price"]',
     addDsoButton: '[qa-id="add-dso-button"]',
@@ -22,5 +24,9 @@ export const CalendarLocators = {
     autoRefreshLoader: '.dso-auto-refresh-loader',
     progressBar: '[role="progressbar"]',
     priceError: '[qa-id="dso-price-error"]',
-    priceInput: '[qa-id="dso-price"]',
+    viewModalTitle: '[qa-id="dso-view-modal-title"]',
+    noDsoMessage: '[qa-id="no-dso"]',
+    viewModalCloseBtn: '[qa-id="dso-view-modal-close-button"]',
+    autoRefreshLoader: '.dso-auto-refresh-loader',
+    modalTitle: '[qa-id="dso-modal-title"]'
 };

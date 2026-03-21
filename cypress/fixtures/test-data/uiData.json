@@ -1,5 +1,10 @@
 {
-  "listingId": "VRMREALTY___50",
+  "listingId": "VRMREALTY___233",
+  "propertyName": "New Seasonal Property",
   "testDate": "2026-03-21",
-  "newPrice": "110"
+  "newPrice": "110",
+  "targetDateId": "2026-03-21",
+  "targetDateText": "March 21, 2026",
+  "bulkPrice":"210"
+  
 }
