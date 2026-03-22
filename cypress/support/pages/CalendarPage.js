@@ -55,28 +55,54 @@ class CalendarPage {
       .and('contain', 'Overrides');
     cy.log(`Modal successfully opened for ${date} (handled potential alerts).`);
   }
-  addPrice(value) {
+  addPriceForDragAndDrop(value) {
+    cy.intercept('POST', '**/api/dso_auto_refresh*').as('refreshApi');
     cy.get(CalendarLocators.priceInput)
       .should('be.visible')
       .clear()
       .type(value);
     cy.get(CalendarLocators.addDsoButton)
       .should('be.visible')
-      .click();
+      .click()
+      
     cy.get('body').then(($body) => {
       if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
         cy.log('Overwrite Warning detected. Confirming update...');
-        cy.contains('button', 'Update', { timeout: 10000 })
+        cy.contains('button', 'Update')
         .should('exist')
         .should('be.visible')
         .click({ force: true });
       }
     });
-    cy.get(CalendarLocators.autoRefreshLoader).should('be.visible');
+    cy.wait(['@refreshApi']);
+    cy.get(CalendarLocators.modalTitle).should('not.exist');
+    cy.log(`Successfully added ${value} (Confirmed overwrite if prompted)`);
+  }
+  addPrice(value) {
+    cy.intercept('POST', '**/api/bulk_dso_auto_refresh_poll*').as('pollApi');
+    cy.get(CalendarLocators.priceInput)
+      .should('be.visible')
+      .clear()
+      .type(value);
+    cy.get(CalendarLocators.addDsoButton)
+      .should('be.visible')
+      .click()
+      
+    cy.get('body').then(($body) => {
+      if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
+        cy.log('Overwrite Warning detected. Confirming update...');
+        cy.contains('button', 'Update')
+        .should('exist')
+        .should('be.visible')
+        .click({ force: true });
+      }
+    });
+    cy.wait('@pollApi',{timeout:6000});
     cy.get(CalendarLocators.modalTitle).should('not.exist');
     cy.log(`Successfully added ${value} (Confirmed overwrite if prompted)`);
   }
   fillPricingAndVerifySummary(base, min, max, override) {
+    cy.intercept('POST', '**/api/bulk_dso_auto_refresh_poll*').as('pollApi');
     const ensurePricingFieldVisible = (labelSelector, inputSelector, value) => {
       cy.get('body').then(($body) => {
         if ($body.find(inputSelector).length === 0) {
@@ -111,6 +137,7 @@ class CalendarPage {
         cy.log('Overwrite confirmed via text-based lookup.');
       }
     });
+    cy.wait(['@pollApi']);
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     cy.reload();
     cy.get('[qa-id="dso-warning-modal-title"]').should('not.exist');
@@ -147,14 +174,14 @@ class CalendarPage {
     cy.get(CalendarLocators.editOverrideBtn(dateId))
       .should('exist')
       .click({ force: true });
-    cy.get('[qa-id="dso-modal-title"]', { timeout: 10000 }).should('be.visible');
+    cy.get(CalendarLocators.modalTitle).should('be.visible');
     cy.log(`Successfully triggered Edit for ${dateText}`);
   }
   performSmartDsoAction(listingId, dateId, price) {
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     this.openDsoModalForDate(dateId);
     cy.get('body').then(($body) => {
-      if ($body.find('[qa-id="update-dso"]').length > 0) {
+      if ($body.find(CalendarLocators.updateDsoButton).length > 0) {
         cy.log('Action: UPDATE');
         this.updatePrice(price);
       } else {
@@ -162,13 +189,14 @@ class CalendarPage {
         this.addPrice(price);
       }
     });
-    cy.reload();
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
   }
   updatePrice(value) {
+    cy.intercept('POST', '**/api/dso_auto_refresh*').as('refreshApi');
     cy.get(CalendarLocators.priceInput).should('be.visible').clear().type(value);
     cy.intercept('POST', '**/api/add_custom_pricing').as('saveDso');
     cy.get(CalendarLocators.updateDsoButton).click();
+    cy.wait('@refreshApi');
     cy.wait('@saveDso').its('response.statusCode').should('eq', 200);
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     cy.get(CalendarLocators.modalTitle).should('not.exist');
@@ -235,7 +263,6 @@ class CalendarPage {
     cy.log(`Tooltip Validation: Price ${expectedPrice} verified via hover.`);
   }
   dragAndDropDateRange(listingId, startIndex, endIndex) {
-    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     cy.get(CalendarLocators.pricingBadge(listingId, startIndex)).trigger('mousedown', { which: 1, force: true });
     cy.get(CalendarLocators.pricingBadge(listingId, endIndex)).trigger('mousemove', { force: true });
     cy.get(CalendarLocators.pricingBadge(listingId, endIndex)).trigger('mouseup', { force: true });

@@ -21,7 +21,7 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             // 2. Advanced Interaction: Drag from index 4 to 6
             CalendarPage.dragAndDropDateRange(listingId, 4, 6);
             // 3. Fill and Save the new range
-            CalendarPage.addPrice(bulkPrice);
+            CalendarPage.addPriceForDragAndDrop(bulkPrice);
             // 4. Multi-Cell Verification (Proves the 'Bulk' aspect)
             CalendarPage.verifyGridPrice(listingId, 4, bulkPrice);
             CalendarPage.verifyGridPrice(listingId, 5, bulkPrice);
