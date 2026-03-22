@@ -1,3 +1,5 @@
+import { LoginLocators } from "./locators/loginLocators";
+
 Cypress.Commands.add('login', () => {
     const credentials = Cypress.env('credentials');
     const userIdentifier = credentials?.email || credentials?.username;
@@ -13,8 +15,8 @@ Cypress.Commands.add('login', () => {
         // 1. Visit the sign-in page
         cy.visit('/signin');
         // 2. Perform Login Actions
-        cy.get('#user_email').should('be.visible').type(userIdentifier);
-        cy.get('[name="user[password]"]').should('be.visible').type(credentials.password, { log: false });
-        cy.get('input[type="submit"]').click();
+        cy.get(LoginLocators.userEmailInputField).should('be.visible').type(userIdentifier);
+        cy.get(LoginLocators.userPasswordInputField).should('be.visible').type(credentials.password, { log: false });
+        cy.get(LoginLocators.signInButton).click();
     })
 });

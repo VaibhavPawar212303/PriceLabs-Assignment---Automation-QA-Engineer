@@ -1,4 +1,3 @@
-import { CalendarLocators } from '../../../../support/locators/calendarLocators';
 import CalendarPage from '../../../../support/pages/CalendarPage';
 
 describe('Feature: Multicalendar DSO (Functional)', () => {
