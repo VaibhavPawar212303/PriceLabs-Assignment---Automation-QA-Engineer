@@ -4,7 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "cy:open": "cypress open"
+    "cy:open": "cypress open --env version=qa",
+    "cy:run:qa": "cypress run --headed -b chrome --env version=qa",
+    "cy:run:api": "cypress run --env version=qa --spec 'cypress/e2e/tests/api-tests/**/*'",
+    "cy:run:ui": "cypress run --headed -b chrome --env version=qa --spec 'cypress/e2e/tests/funtional-tests/**/*'",
+    "cy:run:spec": "cypress run --headed -b chrome --env version=qa --spec",
+    "report:merge": "mochawesome-merge cypress/reports/*.json > cypress/reports/full_report.json",
+    "cy:run:headless": "cypress run --browser chrome --headless --env version=qa --config viewportWidth=1920,viewportHeight=1080",
+    "report:generate": "marge cypress/reports/full_report.json --reportDir cypress/reports --assetsDir cypress/reports/assets --reportPageTitle 'PriceLabs Automation Report'"
   },
   "repository": {
     "type": "git",
