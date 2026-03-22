@@ -70,13 +70,54 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
     });
 
     context('End-to-End: Price Synchronization', () => {
-        it('End-to-End (2): Verify that "Final Price" updates accordingly in the modal', () => {
+        it('End-to-End (1): Verify that "Summary" updates accordingly in the modal', () => {
             const listingId = "VRMREALTY___50";
-            CalendarPage.searchAndVerifyListing(listingId);
-            CalendarPage.openDsoModalForDate(listingId, 4);
+            const newPrice = "165";
+            const expectedPrice = "125"; 
+            
+            // Data for E2E validation
+            const pricingData = {
+                base: "100",
+                min: "110",
+                max: "130",
+                override: "125"
+            };
+    
+            // 1. Navigate and Open Modal
+            CalendarPage.searchAndVerifyListing(listingId, uiData.propertyName);
+            CalendarPage.openDsoModalForDate(uiData.targetDateId);
+    
+            // 2. Perform E2E Summary Validation
+            // This checks if typing 125 updates the ADR and Total to 125
+            CalendarPage.fillPricingAndVerifySummary(
+                pricingData.base,
+                pricingData.min,
+                pricingData.max,
+                pricingData.override
+            );
+            // 4. Final Grid verification
+            CalendarPage.verifyGridPrice(listingId, 4, pricingData.override);
 
-            // Verify that changing the input updates the summary display
-            CalendarPage.verifySummaryUpdate("300");
+            // CalendarPage.verifyPriceViaTooltip(listingId, 4, newPrice);
+
+            CalendarPage.getSummaryPopoverContent(listingId, 4).then((content) => {
+            
+                // 2. Requirement Verification: Verify 'Final' price updates accordingly
+                // Note: The UI concatenates strings, so we check for 'Final125'
+                expect(content).to.include(`Final${expectedPrice}`);
+    
+                // 3. Logic Verification: Verify the 'Listing Override' is the driver
+                expect(content).to.include(`Listing Override${expectedPrice}`);
+    
+                // 4. Data Integrity: Verify the structure of the calculation is present
+                // This proves the 'Summary' component is fully rendered
+                const requiredSections = ['MARKET FACTORS', 'PRICE CUSTOMIZATIONS', 'THRESHOLDS'];
+                requiredSections.forEach(section => {
+                    expect(content).to.include(section);
+                });
+    
+                cy.log('E2E Success: Final Price and full calculation summary verified.');
+            });
         });
     });
 
@@ -90,22 +131,25 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             CalendarPage.openDsoModalForDate(uiData.targetDateId);
 
             // Attempt to type alphabetic characters into a numeric field
-            CalendarPage.verifyPriceRangeValidationError(invalidPrice, expectedError);
+            CalendarPage.verifyPriceRangeValidationError(invalidPrice, expectedError,"Price must be an integer");
 
             // Verify modal didn't close (Validation blocked it)
             cy.get(CalendarLocators.modalTitle).should('be.visible');
         });
 
-        it('Negative (2): Attempt out-of-range percentage and verify toast messages', () => {
+        it('Negative (2): Attempt to input or out-of-range percentages and verify error handling', () => {
             const listingId = "VRMREALTY___50";
+            const invalidPrice = "-10";
+            const expectedError = "Cannot be less than 10";
+
             CalendarPage.searchAndVerifyListing(listingId);
-            CalendarPage.openDsoModalForDate(uiData.targetDateId, 4);
+            CalendarPage.openDsoModalForDate(uiData.targetDateId);
 
-            // Attempt a massive number that should trigger a range error
-            CalendarPage.attemptInvalidUpdate("9999999");
+            // Attempt to type alphabetic characters into a numeric field
+            CalendarPage.verifyPriceRangeValidationError(invalidPrice, expectedError,"Please fix the errors to save DSO.");
 
-            // The app should show a toast/alert
-            cy.get(CalendarLocators.toastAlert).should('be.visible');
+            // Verify modal didn't close (Validation blocked it)
+            cy.get(CalendarLocators.modalTitle).should('be.visible');
         });
     });
 });

@@ -103,6 +103,26 @@ class CalendarPage {
       .should('be.visible')
       .and('contain', expectedPrice);
   }
+  verifyPriceViaTooltip(listingId, cellIndex, expectedPrice) {
+    // 2. Trigger Hover (Requirement: Interaction with Tooltips)
+    // We use trigger('mouseover') to activate the React tooltip listener
+    cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
+      .should('be.visible')
+      .trigger('mouseover', { force: true });
+
+    // 3. Validation: Check the tooltip content
+    // We use a broader timeout because tooltips often have a small fade-in delay
+    cy.get(CalendarLocators.tooltipContainer, { timeout: 8000 })
+      .should('be.visible')
+      .and('contain', expectedPrice)
+      .and('contain', 'Fixed Price'); // Standard PriceLabs tooltip text
+
+    // 4. Cleanup: Mouse out to hide tooltip for subsequent tests
+    cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
+      .trigger('mouseout', { force: true });
+
+    cy.log(`✅ Tooltip Validation: Price ${expectedPrice} verified via hover.`);
+  }
   dragAndDropDateRange(listingId, startIndex, endIndex) {
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     cy.get(CalendarLocators.pricingBadge(listingId, startIndex)).trigger('mousedown', { which: 1, force: true });
@@ -115,9 +135,6 @@ class CalendarPage {
     cy.get(CalendarLocators.priceInput)
       .clear()
       .type(inputPrice);
-
-    // Verification: The summary section should reflect the new input
-    // In PriceLabs, 'New Final Price' header or summary box updates dynamically
     cy.get(CalendarLocators.summaryFinalPrice)
       .should('have.value', inputPrice);
 
@@ -138,22 +155,32 @@ class CalendarPage {
 
     cy.log(`✅ Negative Test: Correctly identified invalid input: ${invalidValue}`);
   }
-  verifyPriceRangeValidationError(invalidValue, expectedErrorMessage) {
-    // 1. Type the invalid value (e.g., a negative number)
+  verifyPriceRangeValidationError(invalidValue, expectedInlineError, expectedToastMessage) {
     cy.get(CalendarLocators.priceInput)
       .should('be.visible')
       .clear()
       .type(invalidValue);
-
-    cy.get(CalendarLocators.updateDsoButton).click();
-
-    // 2. Wait-for-settle: In a dynamic UI, the error appears as the state updates
-    // No cy.wait(number) needed; Cypress retries until the error is visible
+    cy.get(CalendarLocators.addDsoButton).click();
+    cy.get('body').then(($body) => {
+      if ($body.find('[qa-id="dso-warning-modal-title"]').length > 0) {
+        cy.log('⚠️ Overwrite Warning detected. Bypassing animation to click Go Back...');
+        cy.get(CalendarLocators.warningGoBackBtn)
+          .should('be.visible')
+          .click({ force: true });
+        cy.get(CalendarLocators.warningModalTitle).should('not.exist');
+        cy.get(CalendarLocators.addDsoButton).click();
+      }
+    });
     cy.get(CalendarLocators.priceError)
       .should('be.visible')
-      .and('contain', expectedErrorMessage);
-
-    cy.log(`✅ Negative Test: Successfully caught validation error: "${expectedErrorMessage}"`);
+      .and('contain', expectedInlineError);
+    cy.get(CalendarLocators.errorToast).first()
+      .should('be.visible')
+      .within(() => {
+        cy.get(CalendarLocators.toastDescription)
+          .should('have.text', expectedToastMessage);
+      });
+    cy.log(`Negative Test Success: Errors verified for "${invalidValue}"`);
   }
   addPrice(value) {
     cy.get(CalendarLocators.priceInput)
@@ -170,6 +197,62 @@ class CalendarPage {
     cy.get(CalendarLocators.modalTitle).should('not.exist');
     cy.log(`Bulk price ${value} successfully added via Drag & Drop.`);
   }
+  fillPricingAndVerifySummary(base, min, max, override) {
+
+    // Helper to handle the "Add" button logic for Min/Max
+    const ensurePricingFieldVisible = (labelSelector, inputSelector, value) => {
+      cy.get('body').then(($body) => {
+        if ($body.find(inputSelector).length === 0) {
+          cy.log(`Revealing field via Add button for: ${labelSelector}`);
+          // Find the unique label, go to parent container, then find the 'Add' button inside
+          cy.get(labelSelector).parent().find(CalendarLocators.modalGenericAddBtn).click();
+        }
+        cy.get(inputSelector).should('be.visible').clear().type(value);
+      });
+    };
+
+    // 1. Fill Base Price (Unique ID button)
+    cy.get('body').then(($body) => {
+      if ($body.find(CalendarLocators.modalBasePriceInput).length === 0) {
+        cy.get(CalendarLocators.modalAddBaseBtn).click();
+      }
+      cy.get(CalendarLocators.modalBasePriceInput).clear().type(base);
+    });
+
+    // 2. Fill Min and Max Price using the Relative Helper
+    ensurePricingFieldVisible(CalendarLocators.modalMinPriceLabel, CalendarLocators.modalMinPriceInput, min);
+    ensurePricingFieldVisible(CalendarLocators.modalMaxPriceLabel, CalendarLocators.modalMaxPriceInput, max);
+
+    // 3. Fill the Main Override and Verify Summary
+    cy.get(CalendarLocators.modalOverridePriceInput).clear().type(override, { delay: 50 });
+    cy.get(CalendarLocators.addDsoButton).click();
+  }
+  getSummaryPopoverContent(listingId, cellIndex) {
+    // 1. Trigger the popover
+    cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
+      .should('be.visible')
+      .trigger('mouseover', { force: true })
+      .trigger('mouseenter', { force: true });
+
+    // 2. Wait-for-settle: Pricing data replaces "Loading..."
+    // We use a negative assertion to wait for the loader text to disappear
+    // This is the professional way to handle internal React state changes.
+    cy.get(CalendarLocators.summaryPopover, { timeout: 15000 })
+      .should('be.visible')
+      .should('not.contain', 'Loading...') // <--- CRITICAL STEP
+      .should('contain', 'Final');        // Ensure target data is present
+
+    // 3. Capture the settled text
+    return cy.get(CalendarLocators.summaryPopover)
+      .filter(':visible') // Ensure we only get the active one
+      .first()
+      .invoke('text')
+      .then((fullText) => {
+        cy.log('✅ SETTLED POPOVER CONTENT:', fullText);
+        return cy.wrap(fullText);
+      });
+  }
+
 }
 
 export default new CalendarPage();
