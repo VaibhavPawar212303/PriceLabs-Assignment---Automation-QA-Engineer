@@ -1,0 +1,19 @@
+{
+  "listingIdOne": "VRMREALTY___233",
+  "listingIdTwo": "VRMREALTY___50",
+  "propertyName": "New Seasonal Property",
+  "testDate": "2026-03-21",
+  "newPrice": "110",
+  "targetDateId": "2026-03-22",
+  "targetDateText": "March 22, 2026",
+  "bulkPrice": "150",
+  "expectedPrice": "125",
+  "base": "100",
+  "min": "110",
+  "max": "130",
+  "override": "125",
+  "invalidPriceOne": "abc",
+  "expectedErrorOne": "Cannot be less than 0",
+  "invalidPriceTwo": "-10",
+  "expectedErrorTwo":"Cannot be less than 10"
+}
