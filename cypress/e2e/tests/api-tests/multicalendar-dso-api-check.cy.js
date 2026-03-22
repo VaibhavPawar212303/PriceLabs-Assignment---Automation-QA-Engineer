@@ -12,9 +12,8 @@ describe('Feature: Multicalendar DSO API Integration', () => {
 
     describe('Authenticated API Scenarios', () => {
         beforeEach(() => {
-            // Restore the valid session for these tests
             cy.login();
-            cy.visit('/multicalendar'); // Ensure we are on the grid
+            cy.visit('/multicalendar');
             cy.url().should('include', '/multicalendar');
         });
 
@@ -22,7 +21,6 @@ describe('Feature: Multicalendar DSO API Integration', () => {
             it('should update successfully with valid data', () => {
                 APIService.addCustomPricing(apiData.dsoUpdate.validPayload)
                     .then((response) => {
-                        // Check for success - some accounts might return 400 if ID is still wrong
                         expect(response.status).to.eq(200);
                         expect(response.body.message).to.eq('SUCCESS');
                     });
@@ -33,13 +31,8 @@ describe('Feature: Multicalendar DSO API Integration', () => {
             it('should return range error for leadTimeExpiry (0)', () => {
                 APIService.addCustomPricing(apiData.dsoUpdate.invalidPayload)
                     .then((response) => {
-                        // 1. PriceLabs often returns status 400 for business logic errors
-                        // but leaves the top-level 'message' as SUCCESS.
                         expect(response.body.status).to.not.eq(200);
-                        // 2. Convert body to string to check for specific error messages
                         const bodyStr = JSON.stringify(response.body);
-                        // We accept either the Expiry error OR the Listing error 
-                        // This makes the test robust across different QA accounts
                         const isExpectedError = bodyStr.includes("Expiry time") || bodyStr.includes("Listing not found");
                         expect(isExpectedError, `Unexpected API Response: ${bodyStr}`).to.be.true;
                     });

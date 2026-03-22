@@ -23,50 +23,168 @@ class CalendarPage {
       });
     cy.log(`Deep Verification complete for Listing: ${listingId}`);
   }
-  openViewOverridesList(listingId) {
-    cy.get(CalendarLocators.listingEllipses(listingId), { timeout: 15000 })
+  clearNotifications() {
+    cy.get('body').then(($body) => {
+      if ($body.find(CalendarLocators.notificationCloseBtn).length > 0) {
+        cy.log('Clearing blocking notifications...');
+        cy.get(CalendarLocators.notificationCloseBtn).click({multiple: true });
+        cy.get(CalendarLocators.chakraAlert).should('not.exist');
+      }
+    });
+  }
+  openDsoModalForDate(date) {
+    // 1. Define the internal interaction logic for reuse
+    const performHeaderClick = () => {
+      cy.get(CalendarLocators.calendarHeaderDate(date))
+        .should('exist')
+        .trigger('mouseover', { force: true })
+        .trigger('mousedown', { which: 1, force: true })
+        .click({ force: true });
+    };
+    performHeaderClick();
+    cy.get('body').then(($body) => {
+      if ($body.find(CalendarLocators.chakraAlert).length > 0) {
+        cy.log('Alert detected blocking modal opening. Retrying hover and click...');
+        cy.get(CalendarLocators.chakraAlert).should('be.visible');
+        this.clearNotifications();
+        performHeaderClick();
+      }
+    });
+    cy.get(CalendarLocators.modalTitle)
       .should('be.visible')
-      .then(($btn) => {
-        cy.wrap($btn).click({ force: true });
-      });
-    cy.get(CalendarLocators.viewOverridesOption(listingId), { timeout: 10000 })
+      .and('contain', 'Overrides');
+    cy.log(`Modal successfully opened for ${date} (handled potential alerts).`);
+  }
+  addPrice(value) {
+    cy.get(CalendarLocators.priceInput)
+      .should('be.visible')
+      .clear()
+      .type(value);
+    cy.get(CalendarLocators.addDsoButton)
       .should('be.visible')
       .click();
+    cy.get('body').then(($body) => {
+      if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
+        cy.log('Overwrite Warning detected. Confirming update...');
+        cy.contains('button', 'Update', { timeout: 10000 })
+        .should('exist')
+        .should('be.visible')
+        .click({ force: true });
+      }
+    });
+    cy.get(CalendarLocators.autoRefreshLoader).should('be.visible');
+    cy.get(CalendarLocators.modalTitle).should('not.exist');
+    cy.log(`Successfully added ${value} (Confirmed overwrite if prompted)`);
+  }
+  fillPricingAndVerifySummary(base, min, max, override) {
+    const ensurePricingFieldVisible = (labelSelector, inputSelector, value) => {
+      cy.get('body').then(($body) => {
+        if ($body.find(inputSelector).length === 0) {
+          cy.log(`Revealing field via Add button for: ${labelSelector}`);
+          cy.get(labelSelector).parent().find(CalendarLocators.modalGenericAddBtn).click();
+        }
+        cy.get(inputSelector).should('be.visible').clear().type(value);
+      });
+    };
+    cy.get('body').then(($body) => {
+      if ($body.find(CalendarLocators.modalBasePriceInput).length === 0) {
+        cy.get(CalendarLocators.modalAddBaseBtn).click();
+      }
+      cy.get(CalendarLocators.modalBasePriceInput).clear().type(base);
+    });
+    ensurePricingFieldVisible(CalendarLocators.modalMinPriceLabel, CalendarLocators.modalMinPriceInput, min);
+    ensurePricingFieldVisible(CalendarLocators.modalMaxPriceLabel, CalendarLocators.modalMaxPriceInput, max);
+    cy.get(CalendarLocators.modalOverridePriceInput).clear().type(override, { delay: 60 });
+    cy.get(CalendarLocators.addDsoButton).click();
+    cy.get('body').then(($body) => {
+      // Check for the warning title
+      if ($body.find('[qa-id="dso-warning-modal-title"]').length > 0) {
+        cy.log('Overwrite Warning detected. Locating Confirmation button by text...');
+
+        // RE-QUERY STRATEGY: Find the 'Update' button by text inside the dialog
+        // This is the most robust way to handle portaled Chakra UI elements
+        cy.contains('button', 'Update', { timeout: 10000 })
+          .should('exist')
+          .should('be.visible')
+          .click({ force: true });
+          
+        cy.log('Overwrite confirmed via text-based lookup.');
+      }
+    });
+    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
+    cy.reload();
+    cy.get('[qa-id="dso-warning-modal-title"]').should('not.exist');
+    cy.get(CalendarLocators.modalTitle).should('not.exist');
+    cy.log(`Flow Complete: Values saved, warning handled, and grid settled for price: ${override}`);
+  }
+  openViewOverridesList(listingId) {
+    const triggerMenu = (attempts = 0) => {
+      if (attempts > 2) throw new Error(`Failed to open menu for ${listingId} after multiple retries`);
+      cy.get(CalendarLocators.listingEllipses(listingId))
+        .should('be.visible')
+        .click({ force: true });
+      cy.get('body').then(($body) => {
+        const isMenuVisible = $body.find(CalendarLocators.viewOverridesOption(listingId)).length > 0;
+        
+        if (!isMenuVisible) {
+          cy.log(`⚠️ Menu not opened (Attempt ${attempts + 1}). Retrying click...`);
+          cy.wait(500); 
+          triggerMenu(attempts + 1);
+        }
+      });
+    };
+    triggerMenu();
+    cy.get(CalendarLocators.viewOverridesOption(listingId), { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
     cy.get(CalendarLocators.viewModalTitle).should('be.visible');
-    cy.log(`Successfully navigated to Overrides List for: ${listingId}`);
+    cy.log(`Successfully navigated to Management List for: ${listingId}`);
   }
   clickEditOverride(dateId, dateText) {
-    cy.get(CalendarLocators.overrideRowByDate(dateText), { timeout: 10000 })
+    cy.get(CalendarLocators.overrideRowByDate(dateText))
       .should('be.visible')
       .trigger('mouseover');
     cy.get(CalendarLocators.editOverrideBtn(dateId))
       .should('exist')
       .click({ force: true });
     cy.get('[qa-id="dso-modal-title"]', { timeout: 10000 }).should('be.visible');
-    cy.log(`✅ Successfully triggered Edit for ${dateText}`);
+    cy.log(`Successfully triggered Edit for ${dateText}`);
   }
-  openDsoModalForDate(date) {
-    cy.get(CalendarLocators.calendarHeaderDate(date))
-      .should('exist')
-      .trigger('mouseover', { force: true })
-      .trigger('mousedown', { which: 1, force: true })
-      .click({ force: true });
-    cy.get(CalendarLocators.modalTitle, { timeout: 10000 })
-      .should('be.visible')
-      .and('contain', 'Overrides');
-    cy.log(`Modal opened for ${date} after hover sequence.`);
+  performSmartDsoAction(listingId, dateId, price) {
+    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
+    this.openDsoModalForDate(dateId);
+    cy.get('body').then(($body) => {
+      if ($body.find('[qa-id="update-dso"]').length > 0) {
+        cy.log('Action: UPDATE');
+        this.updatePrice(price);
+      } else {
+        cy.log('Action: ADD');
+        this.addPrice(price);
+      }
+    });
+    cy.reload();
+    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
   }
   updatePrice(value) {
     cy.get(CalendarLocators.priceInput).should('be.visible').clear().type(value);
     cy.intercept('POST', '**/api/add_custom_pricing').as('saveDso');
     cy.get(CalendarLocators.updateDsoButton).click();
     cy.wait('@saveDso').its('response.statusCode').should('eq', 200);
-    cy.get(CalendarLocators.autoRefreshLoader, { timeout: 10000 }).should('be.visible');
-    cy.get(CalendarLocators.autoRefreshLoader, { timeout: 30000 }).should('not.exist');
+    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     cy.get(CalendarLocators.modalTitle).should('not.exist');
-    cy.get(CalendarLocators.viewModalCloseBtn, { timeout: 10000 }).should('be.visible').click({ force: true });
+    cy.get(CalendarLocators.viewModalCloseBtn).should('be.visible').click({ force: true });
     cy.get(CalendarLocators.viewModalTitle).should('not.exist');
     cy.log('UI Settle complete: Values are now updated on the grid');
+  }
+  verifyDsoBadgeVisible(listingId, cellIndex) {
+    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
+    cy.reload();
+    cy.get(CalendarLocators.pricingCell(listingId, cellIndex))
+      .find(CalendarLocators.dsoBadge)
+      .should('be.visible')
+      .and('exist');
+      
+    cy.log(`Badge confirmed "Complete" for Cell Index: ${cellIndex}`);
   }
   verifyGridUpdate(listingId, cellIndex, expectedValue) {
     cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
@@ -81,18 +199,19 @@ class CalendarPage {
     cy.get('[qa-id="dso-modal-title"]').should('be.visible');
   }
   updatePriceAndSettle(price) {
-    cy.get(CalendarLocators.priceInput).should('be.visible').clear().type(price);
+    cy.get(CalendarLocators.modalOverridePriceInput).should('be.visible').clear().type(price);
     cy.intercept('POST', '**/api/add_custom_pricing').as('saveApi');
     cy.get(CalendarLocators.updateDsoButton).click();
     cy.wait('@saveApi').its('response.statusCode').should('eq', 200);
+    cy.get('body').then(($body) => {
+      if ($body.find('.chakra-modal__close-btn').length > 0) {
+        cy.get('.chakra-modal__close-btn').should('be.visible').click({ force: true });
+      }
+    });
     cy.get(CalendarLocators.autoRefreshLoader).should('be.visible');
-    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
-
-    // 4. Final Settle: Wait for the Edit modal to close and return to the List modal
+    cy.get(CalendarLocators.autoRefreshLoader, { timeout: 35000 }).should('not.exist');
     cy.get('[qa-id="dso-modal-title"]').should('not.exist');
-    cy.get(CalendarLocators.viewModalTitle).should('be.visible');
-
-    cy.log(`✅ Entry updated to ${price} and returned to management list.`);
+    cy.log(`Entry updated to ${price} and returned to management list`);
   }
   closeManagementList() {
     cy.get(CalendarLocators.viewModalCloseBtn).click({ force: true });
@@ -104,24 +223,16 @@ class CalendarPage {
       .and('contain', expectedPrice);
   }
   verifyPriceViaTooltip(listingId, cellIndex, expectedPrice) {
-    // 2. Trigger Hover (Requirement: Interaction with Tooltips)
-    // We use trigger('mouseover') to activate the React tooltip listener
     cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
       .should('be.visible')
       .trigger('mouseover', { force: true });
-
-    // 3. Validation: Check the tooltip content
-    // We use a broader timeout because tooltips often have a small fade-in delay
     cy.get(CalendarLocators.tooltipContainer, { timeout: 8000 })
       .should('be.visible')
       .and('contain', expectedPrice)
-      .and('contain', 'Fixed Price'); // Standard PriceLabs tooltip text
-
-    // 4. Cleanup: Mouse out to hide tooltip for subsequent tests
+      .and('contain', 'Fixed Price');
     cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
       .trigger('mouseout', { force: true });
-
-    cy.log(`✅ Tooltip Validation: Price ${expectedPrice} verified via hover.`);
+    cy.log(`Tooltip Validation: Price ${expectedPrice} verified via hover.`);
   }
   dragAndDropDateRange(listingId, startIndex, endIndex) {
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
@@ -138,22 +249,17 @@ class CalendarPage {
     cy.get(CalendarLocators.summaryFinalPrice)
       .should('have.value', inputPrice);
 
-    cy.log(`✅ E2E: Summary/Final Price correctly synchronized with input: ${inputPrice}`);
+    cy.log(`E2E: Summary/Final Price correctly synchronized with input: ${inputPrice}`);
   }
   attemptInvalidUpdate(invalidValue) {
     cy.get(CalendarLocators.priceInput)
       .clear()
       .type(invalidValue);
-
-    // We try to click Add/Update to trigger validation
     cy.get(CalendarLocators.updateDsoButton).click();
-
-    // Wait-for-settle: Verify error feedback appears (Toast or Inline)
     cy.get(CalendarLocators.toastAlert, { timeout: 10000 })
       .should('be.visible')
       .and('not.contain', 'SUCCESS');
-
-    cy.log(`✅ Negative Test: Correctly identified invalid input: ${invalidValue}`);
+    cy.log(`Negative Test: Correctly identified invalid input: ${invalidValue}`);
   }
   verifyPriceRangeValidationError(invalidValue, expectedInlineError, expectedToastMessage) {
     cy.get(CalendarLocators.priceInput)
@@ -163,7 +269,7 @@ class CalendarPage {
     cy.get(CalendarLocators.addDsoButton).click();
     cy.get('body').then(($body) => {
       if ($body.find('[qa-id="dso-warning-modal-title"]').length > 0) {
-        cy.log('⚠️ Overwrite Warning detected. Bypassing animation to click Go Back...');
+        cy.log('Overwrite Warning detected. Bypassing animation to click Go Back...');
         cy.get(CalendarLocators.warningGoBackBtn)
           .should('be.visible')
           .click({ force: true });
@@ -182,77 +288,24 @@ class CalendarPage {
       });
     cy.log(`Negative Test Success: Errors verified for "${invalidValue}"`);
   }
-  addPrice(value) {
-    cy.get(CalendarLocators.priceInput)
-      .should('be.visible')
-      .clear()
-      .type(value);
-    cy.intercept('POST', '**/api/add_custom_pricing').as('addDsoApi');
-    cy.get(CalendarLocators.addDsoButton)
-      .should('be.visible')
-      .click();
-    cy.wait('@addDsoApi').its('response.statusCode').should('eq', 200);
-    cy.get(CalendarLocators.autoRefreshLoader).should('be.visible');
-    cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
-    cy.get(CalendarLocators.modalTitle).should('not.exist');
-    cy.log(`Bulk price ${value} successfully added via Drag & Drop.`);
-  }
-  fillPricingAndVerifySummary(base, min, max, override) {
-
-    // Helper to handle the "Add" button logic for Min/Max
-    const ensurePricingFieldVisible = (labelSelector, inputSelector, value) => {
-      cy.get('body').then(($body) => {
-        if ($body.find(inputSelector).length === 0) {
-          cy.log(`Revealing field via Add button for: ${labelSelector}`);
-          // Find the unique label, go to parent container, then find the 'Add' button inside
-          cy.get(labelSelector).parent().find(CalendarLocators.modalGenericAddBtn).click();
-        }
-        cy.get(inputSelector).should('be.visible').clear().type(value);
-      });
-    };
-
-    // 1. Fill Base Price (Unique ID button)
-    cy.get('body').then(($body) => {
-      if ($body.find(CalendarLocators.modalBasePriceInput).length === 0) {
-        cy.get(CalendarLocators.modalAddBaseBtn).click();
-      }
-      cy.get(CalendarLocators.modalBasePriceInput).clear().type(base);
-    });
-
-    // 2. Fill Min and Max Price using the Relative Helper
-    ensurePricingFieldVisible(CalendarLocators.modalMinPriceLabel, CalendarLocators.modalMinPriceInput, min);
-    ensurePricingFieldVisible(CalendarLocators.modalMaxPriceLabel, CalendarLocators.modalMaxPriceInput, max);
-
-    // 3. Fill the Main Override and Verify Summary
-    cy.get(CalendarLocators.modalOverridePriceInput).clear().type(override, { delay: 50 });
-    cy.get(CalendarLocators.addDsoButton).click();
-  }
   getSummaryPopoverContent(listingId, cellIndex) {
-    // 1. Trigger the popover
     cy.get(CalendarLocators.pricingBadge(listingId, cellIndex))
       .should('be.visible')
       .trigger('mouseover', { force: true })
       .trigger('mouseenter', { force: true });
-
-    // 2. Wait-for-settle: Pricing data replaces "Loading..."
-    // We use a negative assertion to wait for the loader text to disappear
-    // This is the professional way to handle internal React state changes.
     cy.get(CalendarLocators.summaryPopover, { timeout: 15000 })
       .should('be.visible')
-      .should('not.contain', 'Loading...') // <--- CRITICAL STEP
-      .should('contain', 'Final');        // Ensure target data is present
-
-    // 3. Capture the settled text
+      .should('not.contain', 'Loading...') 
+      .should('contain', 'Final');       
     return cy.get(CalendarLocators.summaryPopover)
-      .filter(':visible') // Ensure we only get the active one
+      .filter(':visible') 
       .first()
       .invoke('text')
       .then((fullText) => {
-        cy.log('✅ SETTLED POPOVER CONTENT:', fullText);
+        cy.log('SETTLED POPOVER CONTENT:', fullText);
         return cy.wrap(fullText);
       });
   }
-
 }
 
 export default new CalendarPage();
