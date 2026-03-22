@@ -63,8 +63,7 @@ class CalendarPage {
       .type(value);
     cy.get(CalendarLocators.addDsoButton)
       .should('be.visible')
-      .click()
-      
+      .click()   
     cy.get('body').then(($body) => {
       if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
         cy.log('Overwrite Warning detected. Confirming update...');
@@ -124,7 +123,7 @@ class CalendarPage {
     cy.get(CalendarLocators.addDsoButton).click();
     cy.get('body').then(($body) => {
       // Check for the warning title
-      if ($body.find('[qa-id="dso-warning-modal-title"]').length > 0) {
+      if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
         cy.log('Overwrite Warning detected. Locating Confirmation button by text...');
 
         // RE-QUERY STRATEGY: Find the 'Update' button by text inside the dialog
@@ -140,7 +139,7 @@ class CalendarPage {
     cy.wait(['@pollApi']);
     cy.get(CalendarLocators.autoRefreshLoader).should('not.exist');
     cy.reload();
-    cy.get('[qa-id="dso-warning-modal-title"]').should('not.exist');
+    cy.get(CalendarLocators.warningModalTitle).should('not.exist');
     cy.get(CalendarLocators.modalTitle).should('not.exist');
     cy.log(`Flow Complete: Values saved, warning handled, and grid settled for price: ${override}`);
   }
@@ -152,9 +151,8 @@ class CalendarPage {
         .click({ force: true });
       cy.get('body').then(($body) => {
         const isMenuVisible = $body.find(CalendarLocators.viewOverridesOption(listingId)).length > 0;
-        
         if (!isMenuVisible) {
-          cy.log(`⚠️ Menu not opened (Attempt ${attempts + 1}). Retrying click...`);
+          cy.log(`Menu not opened (Attempt ${attempts + 1}). Retrying click...`);
           cy.wait(500); 
           triggerMenu(attempts + 1);
         }
@@ -211,7 +209,6 @@ class CalendarPage {
       .find(CalendarLocators.dsoBadge)
       .should('be.visible')
       .and('exist');
-      
     cy.log(`Badge confirmed "Complete" for Cell Index: ${cellIndex}`);
   }
   verifyGridUpdate(listingId, cellIndex, expectedValue) {
@@ -232,13 +229,13 @@ class CalendarPage {
     cy.get(CalendarLocators.updateDsoButton).click();
     cy.wait('@saveApi').its('response.statusCode').should('eq', 200);
     cy.get('body').then(($body) => {
-      if ($body.find('.chakra-modal__close-btn').length > 0) {
-        cy.get('.chakra-modal__close-btn').should('be.visible').click({ force: true });
+      if ($body.find(CalendarLocators.closeModelButton).length > 0) {
+        cy.get(CalendarLocators.closeModelButton).should('be.visible').click({ force: true });
       }
     });
     cy.get(CalendarLocators.autoRefreshLoader).should('be.visible');
     cy.get(CalendarLocators.autoRefreshLoader, { timeout: 35000 }).should('not.exist');
-    cy.get('[qa-id="dso-modal-title"]').should('not.exist');
+    cy.get(CalendarLocators.modalTitle).should('not.exist');
     cy.log(`Entry updated to ${price} and returned to management list`);
   }
   closeManagementList() {
@@ -275,7 +272,6 @@ class CalendarPage {
       .type(inputPrice);
     cy.get(CalendarLocators.summaryFinalPrice)
       .should('have.value', inputPrice);
-
     cy.log(`E2E: Summary/Final Price correctly synchronized with input: ${inputPrice}`);
   }
   attemptInvalidUpdate(invalidValue) {
@@ -295,7 +291,7 @@ class CalendarPage {
       .type(invalidValue);
     cy.get(CalendarLocators.addDsoButton).click();
     cy.get('body').then(($body) => {
-      if ($body.find('[qa-id="dso-warning-modal-title"]').length > 0) {
+      if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
         cy.log('Overwrite Warning detected. Bypassing animation to click Go Back...');
         cy.get(CalendarLocators.warningGoBackBtn)
           .should('be.visible')

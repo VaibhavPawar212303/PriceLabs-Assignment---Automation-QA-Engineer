@@ -54,6 +54,7 @@ export const CalendarLocators = {
     notificationCloseBtn: '[qa-id="undefined-close-btn"]',
     chakraAlert: '.chakra-alert',
     warningModalTitle: '[qa-id="dso-warning-modal-title"]',
+    closeModelButton:'.chakra-modal__close-btn',
     warningModalFooter: '.chakra-modal__footer',
     confirmUpdateButton: '[qa-id="dso-override-confirmation-update-button"]',
     dsoBadge: '.mc-dso-band', 
