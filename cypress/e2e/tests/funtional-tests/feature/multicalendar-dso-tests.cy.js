@@ -15,17 +15,17 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
     context('Validate the DSO Update And Save persistence', () => {
         it('Functional (1): Update DSO with Random Price via Date Header', () => {
             const listingId = uiData.listingIdTwo;
-            const targetDate = uiData.targetDateId;
+            const todayDate = CalendarPage.getDynamicDate(0)
             const propertyName = uiData.propertyName;
-            const targetDateText = uiData.targetDateText
+            const targetDateText = CalendarPage.getDynamicDateWithMonthName(0).text
             const randomPrice = (Math.floor(Math.random() * 350) + 151).toString();
 
             cy.log(`Test Random Price: ${randomPrice}`);
 
             CalendarPage.searchAndVerifyListing(listingId, propertyName);
-            CalendarPage.performSmartDsoAction(listingId, targetDate, randomPrice);
+            CalendarPage.performSmartDsoAction(listingId, todayDate, randomPrice);
             CalendarPage.openViewOverridesList(listingId);
-            CalendarPage.clickEditOverride(targetDate, targetDateText);
+            CalendarPage.clickEditOverride(todayDate, targetDateText);
             CalendarPage.updatePrice(randomPrice);
             CalendarPage.verifyGridPrice(listingId, 4, randomPrice);
             cy.reload();
@@ -34,8 +34,8 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
         it('Functional (2): Sequential Smart DSO Update and persistence check', () => {
             const listingId = uiData.listingIdTwo;
             const updates = [
-                { dateId: "2026-03-23", cellIndex: 5 },
-                { dateId: "2026-03-24", cellIndex: 6 }
+                { dateId: CalendarPage.getDynamicDate(0), cellIndex: 4 },
+                { dateId: CalendarPage.getDynamicDate(1), cellIndex: 5 }
             ];
             CalendarPage.searchAndVerifyListing(listingId, uiData.propertyName);
             updates.forEach((item) => {
