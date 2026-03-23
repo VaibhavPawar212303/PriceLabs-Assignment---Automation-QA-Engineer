@@ -271,17 +271,8 @@ class CalendarPage {
   getDynamicDate = (daysToAdd = 0) => {
     const date = new Date();
     date.setDate(date.getDate() + daysToAdd);
-    return date.toISOString().split('T')[0];
-  };
-  getDynamicDateWithMonthName = (daysToAdd = 0) => {
-    const date = new Date();
-    date.setDate(date.getDate() + daysToAdd);
-
     return {
-      // Format: 2026-03-23 (for qa-id selectors)
       id: date.toISOString().split('T')[0],
-
-      // Format: March 23, 2026 (for text-based row selection)
       text: date.toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',

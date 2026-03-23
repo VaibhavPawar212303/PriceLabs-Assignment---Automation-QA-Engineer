@@ -16,6 +16,7 @@ module.exports = defineConfig({
   e2e: {  
    async setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
+      
       const version = config.env.version || "qa";
       const envConfig = await getConfigurationByFile(version);
       if (envConfig.baseUrl) {
@@ -27,13 +28,16 @@ module.exports = defineConfig({
       };
       return config;
     },
+
     viewportWidth: 1536,
     viewportHeight: 960,
+    
     video: false,
     screenshotOnRunFailure: true,
     chromeWebSecurity: false,
     retries:2,
     reporter: 'cypress-mochawesome-reporter',
+    
     reporterOptions: {
       charts: true,
       reportPageTitle: 'PriceLabs Automation Report',

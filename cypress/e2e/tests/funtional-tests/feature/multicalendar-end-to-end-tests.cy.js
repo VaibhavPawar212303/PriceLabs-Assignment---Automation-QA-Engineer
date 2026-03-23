@@ -17,7 +17,7 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             const listingId = uiData.listingIdTwo;
             const expectedPrice = uiData.expectedPrice;
             const pricingData = {base: uiData.base,min: uiData.min,max: uiData.max,override: uiData.override};
-            const todayDate = CalendarPage.getDynamicDate(0)
+            const todayDate = CalendarPage.getDynamicDate(0).id
 
             CalendarPage.searchAndVerifyListing(listingId, uiData.propertyName);
             CalendarPage.openDsoModalForDate(todayDate);

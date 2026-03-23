@@ -18,7 +18,7 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             const listingId = uiData.listingIdTwo;
             const invalidPrice = uiData.invalidPriceOne;
             const expectedError = uiData.expectedErrorOne;
-            const todayDate = CalendarPage.getDynamicDate(0)
+            const todayDate = CalendarPage.getDynamicDate(0).id
 
             CalendarPage.searchAndVerifyListing(listingId);
             CalendarPage.openDsoModalForDate(todayDate);
@@ -30,7 +30,7 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             const listingId = uiData.listingIdTwo;
             const invalidPrice = uiData.invalidPriceTwo;
             const expectedError = uiData.expectedErrorTwo;
-            const Date =  CalendarPage.getDynamicDate(0)
+            const Date =  CalendarPage.getDynamicDate(0).id
 
             CalendarPage.searchAndVerifyListing(listingId);
             CalendarPage.openDsoModalForDate(Date);
