@@ -4,7 +4,7 @@
   "propertyName": "New Seasonal Property",
   "testDate": "2026-03-21",
   "newPrice": "110",
-  "targetDateId": "2026-03-22",
+  "targetDateId": "2026-03-23",
   "targetDateText": "March 22, 2026",
   "bulkPrice": "150",
   "expectedPrice": "125",

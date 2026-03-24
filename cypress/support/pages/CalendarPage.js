@@ -38,14 +38,14 @@ class CalendarPage {
       .type(value);
     cy.get(CalendarLocators.addDsoButton)
       .should('be.visible')
-      .click()   
+      .click()
     cy.get('body').then(($body) => {
       if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
         cy.log('Overwrite Warning detected. Confirming update...');
         cy.contains('button', 'Update')
-        .should('exist')
-        .should('be.visible')
-        .click({ force: true });
+          .should('exist')
+          .should('be.visible')
+          .click({ force: true });
       }
     });
     cy.wait(['@refreshApi']);
@@ -76,7 +76,7 @@ class CalendarPage {
         const isMenuVisible = $body.find(CalendarLocators.viewOverridesOption(listingId)).length > 0;
         if (!isMenuVisible) {
           cy.log(`Menu not opened (Attempt ${attempts + 1}). Retrying click...`);
-          cy.wait(500); 
+          cy.wait(500);
           triggerMenu(attempts + 1);
         }
       });
@@ -171,7 +171,7 @@ class CalendarPage {
           .should('exist')
           .should('be.visible')
           .click({ force: true });
-          
+
         cy.log('Overwrite confirmed via text-based lookup.');
       }
     });
@@ -189,10 +189,10 @@ class CalendarPage {
       .trigger('mouseenter', { force: true });
     cy.get(CalendarLocators.summaryPopover, { timeout: 15000 })
       .should('be.visible')
-      .should('not.contain', 'Loading...') 
-      .should('contain', 'Final');       
+      .should('not.contain', 'Loading...')
+      .should('contain', 'Final');
     return cy.get(CalendarLocators.summaryPopover)
-      .filter(':visible') 
+      .filter(':visible')
       .first()
       .invoke('text')
       .then((fullText) => {
@@ -240,7 +240,7 @@ class CalendarPage {
     cy.get('body').then(($body) => {
       if ($body.find(CalendarLocators.notificationCloseBtn).length > 0) {
         cy.log('Clearing blocking notifications...');
-        cy.get(CalendarLocators.notificationCloseBtn).click({multiple: true });
+        cy.get(CalendarLocators.notificationCloseBtn).click({ multiple: true });
         cy.get(CalendarLocators.chakraAlert).should('not.exist');
       }
     });
@@ -254,20 +254,32 @@ class CalendarPage {
     cy.get(CalendarLocators.addDsoButton)
       .should('be.visible')
       .click()
-      
+
     cy.get('body').then(($body) => {
       if ($body.find(CalendarLocators.warningModalTitle).length > 0) {
         cy.log('Overwrite Warning detected. Confirming update...');
         cy.contains('button', 'Update')
-        .should('exist')
-        .should('be.visible')
-        .click({ force: true });
+          .should('exist')
+          .should('be.visible')
+          .click({ force: true });
       }
     });
-    cy.wait('@pollApi',{timeout:6000});
+    cy.wait('@pollApi', { timeout: 6000 });
     cy.get(CalendarLocators.modalTitle).should('not.exist');
     cy.log(`Successfully added ${value} (Confirmed overwrite if prompted)`);
-  }  
+  }
+  getDynamicDate = (daysToAdd = 0) => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysToAdd);
+    return {
+      id: date.toISOString().split('T')[0],
+      text: date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    };
+  };
 }
 
 export default new CalendarPage();

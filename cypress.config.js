@@ -4,7 +4,7 @@ const fs = require("fs-extra");
 
 function getConfigurationByFile(version) {
   const pathToConfigFile = path.resolve("cypress", "fixtures", "config", `${version}.env.json`);
-  
+
   if (!fs.existsSync(pathToConfigFile)) {
     console.warn(`Config file not found: ${version}.env.json. Defaulting to empty config.`);
     return {};
@@ -13,9 +13,10 @@ function getConfigurationByFile(version) {
 }
 
 module.exports = defineConfig({
-  e2e: {  
-   async setupNodeEvents(on, config) {
+  e2e: {
+    async setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
+
       const version = config.env.version || "qa";
       const envConfig = await getConfigurationByFile(version);
       if (envConfig.baseUrl) {
@@ -27,13 +28,16 @@ module.exports = defineConfig({
       };
       return config;
     },
-    viewportWidth: 1536,
-    viewportHeight: 960,
+
+    viewportWidth: 1920,
+    viewportHeight: 1080,
+
     video: false,
     screenshotOnRunFailure: true,
     chromeWebSecurity: false,
-    retries:2,
+    retries: 2,
     reporter: 'cypress-mochawesome-reporter',
+
     reporterOptions: {
       charts: true,
       reportPageTitle: 'PriceLabs Automation Report',
