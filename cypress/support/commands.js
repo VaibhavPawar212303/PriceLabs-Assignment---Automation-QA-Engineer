@@ -20,3 +20,7 @@ Cypress.Commands.add('login', () => {
         cy.get(LoginLocators.signInButton).click();
     })
 });
+
+Cypress.Commands.add('dragAndDrop',()=>{
+    
+})

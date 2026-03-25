@@ -12,6 +12,8 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
         cy.visit('/multicalendar');
     });
 
+
+
     context('Validate the DSO Update And Save persistence', () => {
         it('Functional (1): Update DSO with Random Price via Date Header', () => {
             const listingId = uiData.listingIdTwo;
@@ -52,4 +54,7 @@ describe('Feature: Multicalendar DSO (Functional)', () => {
             cy.log('Sequential Smart DSO updates and persistence verified successfully.');
         });
     });
+
+
+
 });

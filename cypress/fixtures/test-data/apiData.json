@@ -19,10 +19,10 @@
       "syncChildren": true,
       "isParentListing": true,
       "hasChildren": false,
-      "startDate": "Mar 20 2026",
-      "endDate": "Mar 22 2026",
+      "startDate": "Mar 24 2026",
+      "endDate": "Mar 26 2026",
       "actualStartDate": "2026-03-20",
-      "actualEndDate": "2026-03-21",
+      "actualEndDate": "2026-03-23",
       "leadTimeExpiry": "24",
       "currentRowIndex": 7,
       "snoozeDso": false,
@@ -32,7 +32,7 @@
       "checkOut": "1111111"
     },
     "invalidPayload": {
-      "price": "-999", 
+      "price": "-999",
       "leadTimeExpiry": "0",
       "listingId": "PMS_ID_123",
       "actualStartDate": "9999-99-99"
@@ -40,6 +40,13 @@
     "auth": {
       "expiredToken": "eyJhbGciOiJIUzI1NiIsInR5...",
       "garbageToken": "invalid_12345"
+    },
+    "datePayload": {
+      "date": "Tue Mar 24 2026",
+      "listingId": "VRMREALTY___50",
+      "pmsName": "vrm",
+      "parentKey": 2102231,
+      "a" : 1774357151950
     }
   }
 }
